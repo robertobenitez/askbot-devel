@@ -1101,13 +1101,13 @@ Comment.prototype.getParentId = function(){
 Comment.prototype.setContent = function(data){
     this._data = data || this._data;
     this._element.html('');
-    this._element.attr('class', 'comment');
-    this._element.attr('id', 'comment-' + this._data['id']);
+    this._element.attr('class', 'title');
+    this._element.attr('id', 'title-' + this._data['id']);
 
     this._element.append(this._data['html']);
     this._element.append(' - ');
 
-    this._user_link = $('<a></a>').attr('class', 'author');
+    this._user_link = $('<a></a>').attr('class');
     this._user_link.attr('href', this._data['user_url']);
     this._user_link.html(this._data['user_display_name']);
     this._element.append(this._user_link);

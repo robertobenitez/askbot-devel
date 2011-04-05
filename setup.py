@@ -26,7 +26,8 @@ import askbot
 
 WIN_PLATFORMS = ('win32', 'cygwin',)
 if sys.platform not in WIN_PLATFORMS:
-    install_requires.append('mysql-python')
+    #install_requires.append('mysql-python')
+    pass
 
 setup(
     name = "askbot",

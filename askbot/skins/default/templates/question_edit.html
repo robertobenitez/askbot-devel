@@ -6,7 +6,9 @@
     <link rel="stylesheet" type="text/css" href="{{"/js/wmd/wmd.css"|media}}" />
 {% endblock %}
 {% block content %}
-<h1>{% trans %}Edit question{% endtrans %} [<a href="{{ question.get_absolute_url() }}">{% trans %}back{% endtrans %}</a>]</h1>
+<h1>{% trans %}Edit question{% endtrans %} [<a href="{{ question.get_absolute_url() }}">{% trans %}back{% endtrans %}</a>]
+<input type="button" class="editTitle" value="edit" />
+</h1>
 <form id="fmedit" action="{% url edit_question question.id %}" method="post" >
     <label for="id_revision" ><strong>{% trans %}revision{% endtrans %}:</strong></label> <br/>
     {% if revision_form.revision.errors %}{{ revision_form.revision.errors.as_ul() }}{% endif %}

@@ -11,7 +11,16 @@
     <link rel="stylesheet" type="text/css" href="{{"/js/wmd/wmd.css"|media}}" />
 {% endblock %}
 {% block content %}
-<h1><a href="{{ question.get_absolute_url() }}">{{ question.get_question_title() }}</a></h1>
+<h1>
+<!--  <a id="title" href="{{ question.get_absolute_url() }}">{{ question.get_question_title() }}
+  </a>
+  <script type="text/javascript">
+    var titleUrl = "{{ question.get_absolute_url() }}";
+  </script>
+-->
+  <a id="title" href="#">{{ question.get_question_title() }}
+  </a>
+</h1>
 <div id="askform">
     <table style="width:100%;" id="question-table" {% if question.deleted %}class="deleted"{%endif%}>
         <tr>
