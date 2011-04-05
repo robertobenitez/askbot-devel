@@ -186,6 +186,249 @@ EditLink.prototype.decorate = function(element){
     this._element.html($.i18n._('edit'));
     this.setHandlerInternal();
 };
+  
+//-------------------------------------------- begin ----------------------------------
+
+//constructor for the widget
+
+var EditableTitleWidget = function(){
+    WrappedElement.call(this);
+    this._title = null;
+    this._element = null;
+    this._text = '';
+    this._id = 'edit-title';
+};
+inherits(EditableTitleWidget, WrappedElement);
+
+EditableTitleWidget.prototype.getElement = function(){
+    EditableTitleWidget.superClass_.getElement.call(this);
+    this._inputText.val(this._text);
+    return this._element;
+};
+
+EditableTitleWidget.prototype.focus = function(){
+    this._inputText.focus();
+};
+
+EditableTitleWidget.prototype.decorate = function(){
+    this._element = $('<input></input>');
+    this._element.attr('id', this._id);
+
+    var escape_handler = makeKeyHandler(27, this.getCancelHandler());
+
+    this._inputText.attr('name', 'edit-title')
+            .attr('type', 'text')
+            .keyup(escape_handler);
+    if (askbot['settings']['saveTitleOnEnter']){
+        var save_handler = makeKeyHandler(13, this.getSaveHandler());
+        this._inputText.keydown(save_handler);
+    }
+    this._inputText.val(this._text);
+};
+
+EditableTitleWidget.prototype.canCancel = function(){
+    if (this._element === null){
+        return true;
+    }
+    var ctext = $.trim(this._inputText.val());
+    if ($.trim(ctext) == $.trim(this._text)){
+        return true;
+    }
+    else if (this.confirmAbandon()){
+        return true;
+    }
+    this.focus();
+    return false;
+};
+
+EditableTitleWidget.prototype.getCancelHandler = function(){
+    var widget = this;
+    return function(){
+        if (widget.canCancel()){
+            widget.detach();
+        } 
+        return false;
+    };
+};
+
+EditableTitleWidget.prototype.detach = function(){
+    if (this._title === null){
+        return;
+    }
+    this._title.getContainerWidget().showButton();
+    if (this._title.isBlank()){
+        this._title.dispose();
+    }
+    else {
+        this._title.getElement().show();
+    }
+    this.reset();
+    this._element = this._element.detach();
+};
+
+EditableTitleWidget.prototype.confirmAbandon = function(){
+    this.focus(true);
+    this._inputText.addClass('highlight');
+    var answer = confirm($.i18n._('confirm abandon title'));
+    this._inputText.removeClass('highlight');
+    return answer;
+};
+
+EditableTitleWidget.prototype.getSaveHandler = function(){
+
+    alert('getSaveHandler');
+
+};
+
+//a single instance to reuse
+var editableTitleWidget = new EditableTitleWidget();
+
+var QuestionTitle = function(widget, data){
+    WrappedElement.call(this);
+    this._container_widget = widget;
+    this._data = data || {};
+    this._blank = true;//set to false by setContent
+    this._element = null;
+};
+inherits(QuestionTitle, WrappedElement);
+
+QuestionTitle.prototype.decorate = function(element){
+    this._element = $('#CALeft h1 a');
+    var parent_type = this._element.parent().parent().attr('id').split('-')[2];
+    var question_title_id = this._element.attr('id').replace('title-','');
+    this._container_widget = widget;
+    this._data = {id: question_title_id};
+    this._blank = true;//set to false by setContent
+    var edit_link = this._element.find('#CALeft h1 a'); // jquery element ?
+    if (edit_link.length > 0){
+        this._editable = true;
+        this._edit_link = new EditLink();
+        this._edit_link.setHandler(this.getEditHandler());
+        this._edit_link.decorate(edit_link);
+    }
+    this._blank = false;
+};
+
+QuestionTitle.prototype.isBlank = function(){
+    return this._blank;
+};
+
+QuestionTitle.prototype.getId = function(){
+    return this._data['id'];
+};
+
+QuestionTitle.prototype.hasContent = function(){
+    return ('id' in this._data);
+    //shortcut for 'user_url' 'html' 'user_display_name'
+};
+
+QuestionTitle.prototype.hasText = function(){
+    return ('text' in this._data);
+}
+
+QuestionTitle.prototype.getContainerWidget = function(){
+    return this._container_widget;
+};
+
+QuestionTitle.prototype.getParentType = function(){
+    return this._container_widget.getPostType();
+};
+
+QuestionTitle.prototype.getParentId = function(){
+    return this._container_widget.getPostId();
+};
+
+QuestionTitle.prototype.setContent = function(data){
+    this._data = data || this._data;
+    this._element.html('');
+//rmb: there is no class for question title    this._element.attr('class', 'comment');
+    this._element.attr('id', 'questionTitle-' + this._data['id']);
+
+    this._element.append(this._data['html']);
+    this._element.append(' - ');
+
+    this._user_link = $('<a></a>').attr('class', 'author');
+    this._user_link.attr('href', this._data['user_url']);
+    this._user_link.html(this._data['user_display_name']);
+    this._element.append(this._user_link);
+
+    if (this._editable){
+        this._edit_link = new EditLink();
+        this._edit_link.setHandler(this.getEditHandler())
+        this._element.append(this._edit_link.getElement());
+    }
+
+    this._blank = false;
+};
+
+QuestionTitle.prototype.dispose = function(){
+    if (this._user_link){
+        this._user_link.remove();
+    }
+    if (this._edit_link){
+        this._edit_link.dispose();
+    }
+    this._data = null;
+    QuestionTitle.superClass_.dispose.call(this);
+};
+
+QuestionTitle.prototype.getElement = function(){
+    QuestionTitle.superClass_.getElement.call(this);
+    if (this.isBlank() && this.hasContent()){
+        this.setContent();
+        if (enableMathJax === true){
+            MathJax.Hub.Queue(['Typeset', MathJax.Hub]);
+        }
+    }
+    return this._element;
+};
+
+QuestionTitle.prototype.loadText = function(on_load_handler){
+    var me = this;
+    alert('loadText pg389');
+//    $.ajax({
+//        type: "GET",
+//        url: askbot['urls']['getComment'],
+//        data: {id: this._data['id']},
+//        success: function(json){
+//            me._data['text'] = json['text'];
+//            on_load_handler()
+//        },
+//        error: function(xhr, textStatus, exception) {
+//            showMessage(me.getElement(), xhr.responseText, 'after');
+//        }
+//    });
+};
+
+QuestionTitle.prototype.getText = function(){
+    if (!this.isBlank()){
+        if ('text' in this._data){
+            return this._data['text'];
+        }
+    }
+    return '';
+}
+
+QuestionTitle.prototype.getEditHandler = function(){
+    var questionTitle = this;
+    return function(){
+        if (editableTitleWidget.canCancel()){
+            editableTitleWidget.detach();
+            if (questionTitle.hasText()){
+                editableTitleWidget.attachTo(questionTitle, 'edit');
+            }
+            else {
+                questionTitle.loadText(
+                    function(){
+                        editableTitleWidget.attachTo(questionTitle, 'edit');
+                    }
+                );
+            }
+        }
+    };
+};
+
+//------------------------------------- end -----------------------------------------
 
 var DeleteIcon = function(title){
     SimpleControl.call(this);
